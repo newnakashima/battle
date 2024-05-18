@@ -9,6 +9,11 @@
         #game { max-width: 600px; margin: auto; text-align: center; }
         #messages { text-align: left; }
         .button { padding: 10px 20px; font-size: 16px; margin: 5px; cursor: pointer; width: 200px; }
+        #items { overflow-y: scroll; height: 200px; }
+        #items li { display: flex; justify-content: space-evenly; list-style-type: none; }
+        #items li:nth-child(n+2) { height: 30px; }
+        #items li *:first-child { width: 50%; }
+        #items li *:nth-child(2) { width: 50%; }
     </style>
 </head>
 <body>
@@ -18,7 +23,15 @@
             <div>
                 <h2>プレイヤー</h2>
                 <p id="playerStats"></p>
-                <div id="inventory"></div>
+                <div id="inventory">
+                    <h3>背嚢</h3>
+                    <ul id="items">
+                        <li>
+                            <h4>アイテム名</h4>
+                            <h4>個数</h4>
+                        </li>
+                    </ul>
+                </div>
             </div>
             <div>
                 <h2 id="enemy-name">敵</h2>
@@ -28,306 +41,6 @@
         <button id="toggleButton" class="button">探索</button>
         <ul id="messages"></ul>
     </div>
-    <script>
-        const statePlaying = 0;
-        const statePaused = 1;
-        const stateGameOver = 2;
-        const availableStates = ["playing", "paused", "gameover"];
-        let gameState = availableStates[statePaused];
-        const enemies = [
-            { id: 1, name: "スライム", level: 1, hp: 10, attack: 3, defense: 1 },
-            { id: 2, name: "ゴブリン", level: 2, hp: 15, attack: 5, defense: 2 },
-            { id: 3, name: "オーク", level: 3, hp: 30, attack: 7, defense: 3 },
-            { id: 4, name: "ウルフ", level: 4, hp: 25, attack: 10, defense: 3 },
-            { id: 5, name: "ゾンビ", level: 5, hp: 35, attack: 8, defense: 4 },
-            { id: 6, name: "ミノタウロス", level: 6, hp: 50, attack: 12, defense: 5 },
-            { id: 7, name: "ケンタウロス", level: 7, hp: 45, attack: 14, defense: 6 },
-            { id: 8, name: "トロール", level: 8, hp: 60, attack: 15, defense: 7 },
-            { id: 9, name: "デーモン", level: 9, hp: 55, attack: 18, defense: 8 },
-            { id: 10, name: "ゴーレム", level: 10, hp: 80, attack: 10, defense: 15 },
-            { id: 11, name: "ドラゴン", level: 11, hp: 100, attack: 25, defense: 10 },
-            { id: 12, name: "ファイアードラゴン", level: 12, hp: 110, attack: 28, defense: 12 },
-            { id: 13, name: "アイスドラゴン", level: 13, hp: 120, attack: 26, defense: 13 },
-            { id: 14, name: "サンダードラゴン", level: 14, hp: 115, attack: 30, defense: 11 },
-            { id: 15, name: "アースドラゴン", level: 15, hp: 130, attack: 27, defense: 14 },
-            { id: 16, name: "ナイト", level: 16, hp: 90, attack: 20, defense: 20 },
-            { id: 17, name: "ダークナイト", level: 17, hp: 95, attack: 23, defense: 18 },
-            { id: 18, name: "シャドウナイト", level: 18, hp: 85, attack: 26, defense: 19 },
-            { id: 19, name: "パラディン", level: 19, hp: 100, attack: 22, defense: 22 },
-            { id: 20, name: "ダークパラディン", level: 20, hp: 105, attack: 25, defense: 21 },
-            { id: 21, name: "グリフィン", level: 21, hp: 80, attack: 30, defense: 15 },
-            { id: 22, name: "フェニックス", level: 22, hp: 90, attack: 28, defense: 16 },
-            { id: 23, name: "バジリスク", level: 23, hp: 75, attack: 32, defense: 13 },
-            { id: 24, name: "マンティコア", level: 24, hp: 85, attack: 31, defense: 17 },
-            { id: 25, name: "ヒュドラ", level: 25, hp: 100, attack: 34, defense: 18 },
-            { id: 26, name: "ワイバーン", level: 26, hp: 95, attack: 33, defense: 17 },
-            { id: 27, name: "リッチ", level: 27, hp: 80, attack: 36, defense: 12 },
-            { id: 28, name: "ヴァンパイア", level: 28, hp: 85, attack: 35, defense: 14 },
-            { id: 29, name: "デスナイト", level: 29, hp: 110, attack: 38, defense: 20 },
-            { id: 30, name: "アークエンジェル", level: 30, hp: 120, attack: 40, defense: 22 },
-            { id: 31, name: "ティターニア", level: 31, hp: 95, attack: 42, defense: 18 },
-            { id: 32, name: "バフォメット", level: 32, hp: 105, attack: 41, defense: 20 },
-            { id: 33, name: "グレートドラゴン", level: 33, hp: 130, attack: 45, defense: 25 },
-            { id: 34, name: "ヘルハウンド", level: 34, hp: 85, attack: 48, defense: 18 },
-            { id: 35, name: "ベヒモス", level: 35, hp: 140, attack: 50, defense: 22 },
-            { id: 36, name: "リヴァイアサン", level: 36, hp: 150, attack: 52, defense: 24 },
-            { id: 37, name: "タイタン", level: 37, hp: 160, attack: 55, defense: 26 },
-            { id: 38, name: "イフリート", level: 38, hp: 140, attack: 58, defense: 20 },
-            { id: 39, name: "フェンリル", level: 39, hp: 135, attack: 60, defense: 18 },
-            { id: 40, name: "ドラウグル", level: 40, hp: 120, attack: 62, defense: 15 },
-            { id: 41, name: "ナイトメア", level: 41, hp: 125, attack: 65, defense: 17 },
-            { id: 42, name: "サイクロプス", level: 42, hp: 170, attack: 55, defense: 30 },
-            { id: 43, name: "ケルベロス", level: 43, hp: 160, attack: 68, defense: 22 },
-            { id: 44, name: "ギガス", level: 44, hp: 180, attack: 70, defense: 28 },
-            { id: 45, name: "エルダーリッチ", level: 45, hp: 140, attack: 75, defense: 20 },
-            { id: 46, name: "ドラゴンゾンビ", level: 46, hp: 200, attack: 65, defense: 30 },
-            { id: 47, name: "デスワーム", level: 47, hp: 190, attack: 72, defense: 25 },
-            { id: 48, name: "バンシー", level: 48, hp: 150, attack: 78, defense: 18 },
-            { id: 49, name: "デスグリフォン", level: 49, hp: 160, attack: 80, defense: 20 },
-            { id: 50, name: "ダークドラゴン", level: 50, hp: 210, attack: 85, defense: 35 },
-            { id: 51, name: "ラーヴァドラゴン", level: 51, hp: 220, attack: 88, defense: 37 },
-            { id: 52, name: "フロストドラゴン", level: 52, hp: 230, attack: 85, defense: 40 },
-            { id: 53, name: "ストームドラゴン", level: 53, hp: 225, attack: 90, defense: 38 },
-            { id: 54, name: "ロックドラゴン", level: 54, hp: 240, attack: 87, defense: 42 },
-            { id: 55, name: "ホーリードラゴン", level: 55, hp: 250, attack: 95, defense: 45 },
-            { id: 56, name: "ダークエルフ", level: 56, hp: 180, attack: 100, defense: 25 },
-            { id: 57, name: "ブラッドナイト", level: 57, hp: 195, attack: 105, defense: 28 },
-            { id: 58, name: "ソウルリーパー", level: 58, hp: 185, attack: 110, defense: 22 },
-            { id: 59, name: "デスロード", level: 59, hp: 210, attack: 115, defense: 30 },
-            { id: 60, name: "ネクロマンサー", level: 60, hp: 200, attack: 120, defense: 27 },
-            { id: 61, name: "デスプリースト", level: 61, hp: 190, attack: 125, defense: 25 },
-            { id: 62, name: "シャドウプリースト", level: 62, hp: 195, attack: 130, defense: 26 },
-            { id: 63, name: "デスエンペラー", level: 63, hp: 220, attack: 135, defense: 32 },
-            { id: 64, name: "シャドウエンペラー", level: 64, hp: 215, attack: 140, defense: 30 },
-            { id: 65, name: "デスアークエンジェル", level: 65, hp: 230, attack: 145, defense: 35 },
-            { id: 66, name: "ダークアークエンジェル", level: 66, hp: 225, attack: 150, defense: 33 },
-            { id: 67, name: "タイラントドラゴン", level: 67, hp: 250, attack: 160, defense: 40 },
-            { id: 68, name: "カオスドラゴン", level: 68, hp: 260, attack: 165, defense: 42 },
-            { id: 69, name: "アビスドラゴン", level: 69, hp: 270, attack: 170, defense: 45 },
-            { id: 70, name: "ヘルドラゴン", level: 70, hp: 280, attack: 175, defense: 50 },
-            { id: 71, name: "アポカリプスドラゴン", level: 71, hp: 290, attack: 180, defense: 55 },
-            { id: 72, name: "エンシェントドラゴン", level: 72, hp: 300, attack: 185, defense: 60 },
-            { id: 73, name: "ドラゴンキング", level: 73, hp: 310, attack: 190, defense: 65 },
-            { id: 74, name: "ギガドラゴン", level: 74, hp: 320, attack: 195, defense: 70 },
-            { id: 75, name: "アルティメットドラゴン", level: 75, hp: 330, attack: 200, defense: 75 },
-            { id: 76, name: "スーパードラゴン", level: 76, hp: 340, attack: 210, defense: 80 },
-            { id: 77, name: "メガドラゴン", level: 77, hp: 350, attack: 220, defense: 85 },
-            { id: 78, name: "ギガドラゴン", level: 78, hp: 360, attack: 230, defense: 90 },
-            { id: 79, name: "テラドラゴン", level: 79, hp: 370, attack: 240, defense: 95 },
-            { id: 80, name: "ペタドラゴン", level: 80, hp: 380, attack: 250, defense: 100 },
-            { id: 81, name: "エクサドラゴン", level: 81, hp: 390, attack: 260, defense: 105 },
-            { id: 82, name: "ゼタドラゴン", level: 82, hp: 400, attack: 270, defense: 110 },
-            { id: 83, name: "ヨタドラゴン", level: 83, hp: 410, attack: 280, defense: 115 },
-            { id: 84, name: "ブランドラゴン", level: 84, hp: 420, attack: 290, defense: 120 },
-            { id: 85, name: "クロノドラゴン", level: 85, hp: 430, attack: 300, defense: 125 },
-            { id: 86, name: "インフィニティドラゴン", level: 86, hp: 440, attack: 310, defense: 130 },
-            { id: 87, name: "オメガドラゴン", level: 87, hp: 450, attack: 320, defense: 135 },
-            { id: 88, name: "アルファドラゴン", level: 88, hp: 460, attack: 330, defense: 140 },
-            { id: 89, name: "ガンマドラゴン", level: 89, hp: 470, attack: 340, defense: 145 },
-            { id: 90, name: "デルタドラゴン", level: 90, hp: 480, attack: 350, defense: 150 },
-            { id: 91, name: "シグマドラゴン", level: 91, hp: 490, attack: 360, defense: 155 },
-            { id: 92, name: "パイドラゴン", level: 92, hp: 500, attack: 370, defense: 160 },
-            { id: 93, name: "イプシロンドラゴン", level: 93, hp: 510, attack: 380, defense: 165 },
-            { id: 94, name: "ゼータドラゴン", level: 94, hp: 520, attack: 390, defense: 170 },
-            { id: 95, name: "シータドラゴン", level: 95, hp: 530, attack: 400, defense: 175 },
-            { id: 96, name: "イオタドラゴン", level: 96, hp: 540, attack: 410, defense: 180 },
-            { id: 97, name: "カッパドラゴン", level: 97, hp: 550, attack: 420, defense: 185 },
-            { id: 98, name: "ラムダドラゴン", level: 98, hp: 560, attack: 430, defense: 190 },
-            { id: 99, name: "ニュードラゴン", level: 99, hp: 570, attack: 440, defense: 195 },
-            { id: 100, name: "シータドラゴン", level: 100, hp: 580, attack: 450, defense: 200 }
-        ];
-
-        class Character {
-            constructor(name, level, hp, attack, defense) {
-                this.name = name;
-                this.level = level;
-                this.hp = hp;
-                this.maxHp = hp;
-                this.attack = attack;
-                this.defense = defense;
-                this.buffs = [];
-                this.equipment = [];
-            }
-
-            getCalculatedAttack() {
-                const buffs = this.buffs.reduce((a, b) => a + (b.type === 'attack' ? b.value : 0), 0);
-                const equipment = this.equipment.reduce((a, b) => a + b.attack, 0);
-                return this.attack + buffs + equipment;
-            }
-
-            takeDamage(damage, mustAlive = false) {
-                const actualDamage = Math.max(damage - this.defense, 1);
-                this.hp -= actualDamage;
-                if (this.hp < 0) this.hp = 0;
-                if (mustAlive && !this.isAlive()) this.hp = 1;
-                return actualDamage;
-            }
-
-            isAlive() {
-                return this.hp > 0;
-            }
-        }
-
-        class Player extends Character {
-            constructor() {
-                super("プレイヤー", 1, 100, 10, 5);
-                this.exp = 0;
-                this.gold = 0;
-                this.inventory = [];
-            }
-
-            gainExp(amount) {
-                this.exp += amount;
-                const nextLevelExp = this.level * 100;
-                if (this.exp >= nextLevelExp) {
-                    this.levelUp();
-                    this.exp -= nextLevelExp;
-                }
-            }
-
-            levelUp() {
-                this.level++;
-                this.maxHp += 20;
-                this.hp = this.maxHp;
-                this.attack += 5;
-                this.defense += 2;
-            }
-
-            gainGold(amount) {
-                this.gold += amount;
-            }
-
-            addItem(item) {
-                this.inventory.push(item);
-            }
-
-            useItem(index) {
-                const item = this.inventory[index];
-                item.use(this);
-                this.inventory.splice(index, 1);
-            }
-        }
-
-        class Enemy extends Character {
-            constructor(playerLevel) {
-                // playerLevel の +- 3 の範囲でランダムなレベルの敵を生成
-                let level = Math.max(1, playerLevel + Math.floor(Math.random() * 7) - 3);
-                // levelは必ず1以上100以下になるように調整
-                level = Math.min(100, level);
-                // 該当するレベルのenemyを取得
-                const enemy = enemies.find(enemy => enemy.level === level);
-                super(enemy.name, enemy.level, enemy.hp, enemy.attack, enemy.defense);
-
-                document.querySelector("#enemy-name").textContent = enemy.name;
-            }
-        }
-
-        class Item {
-            constructor(name, effect) {
-                this.name = name;
-                this.effect = effect;
-            }
-
-            use(player) {
-                this.effect(player);
-            }
-        }
-
-        const items = [
-            new Item("包帯", player => { player.hp = Math.min(player.maxHp, player.hp + 30); }),
-            new Item("紫色の薬草", player => { player.hp = Math.min(player.maxHp, player.hp + 200); }),
-            new Item("覚醒作用と多幸感をもたらす異世界の粉末", player => { player.hp = player.maxHp; }),
-            new Item("ステロイド", player => { player.attack += 5; }),
-            new Item("皮下シリコン", player => { player.defense += 3; }),
-            new Item("火炎瓶", player => { if (enemy.isAlive()) { addMessage(`${player.name}は火炎瓶を投げた。`); enemy.takeDamage(20, true); } }),
-            new Item("手榴弾", player => { if (enemy.isAlive()) { enemy.takeDamage(100, true); } }),
-            new Item("RPG", player => { if (enemy.isAlive()) { enemy.takeDamage(200, true); } }),
-            new Item("波動砲", player => { if (enemy.isAlive()) { enemy.takeDamage(700, true); } }),
-        ];
-
-        function getRandomItem() {
-            if (Math.random() < 0.1) {
-                const item = items[Math.floor(Math.random() * items.length)];
-                return new Item(item.name, item.effect);
-            }
-            return null;
-        }
-
-        const player = new Player();
-        let enemy = new Enemy(player.level);
-
-        const playerStats = document.getElementById("playerStats");
-        const enemyStats = document.getElementById("enemyStats");
-        const inventory = document.getElementById("inventory");
-        const toggleButton = document.getElementById("toggleButton");
-        const messages = document.getElementById("messages");
-
-        let gameInterval;
-
-        function updateStats() {
-            playerStats.textContent = `レベル: ${player.level} | HP: ${player.hp}/${player.maxHp} | 攻撃力: ${player.attack} | 防御力: ${player.defense} | 経験値: ${player.exp} | ゴールド: ${player.gold}`;
-            enemyStats.textContent = `レベル: ${enemy.level} | HP: ${enemy.hp}/${enemy.maxHp} | 攻撃力: ${enemy.attack} | 防御力: ${enemy.defense}`;
-            inventory.innerHTML = "インベントリ: " + player.inventory.map((item, index) => `<button onclick="useItem(${index})">${item.name}</button>`).join(" ");
-        }
-
-        function addMessage(text) {
-            const message = document.createElement("li");
-            message.textContent = text;
-            messages.insertBefore(message, messages.firstChild);
-            const children = messages.children;
-            if (children.length > 100) {
-                messages.removeChild(children[children.length - 1]);
-            }
-
-        }
-
-        function battleTurn() {
-            if (!player.isAlive() || !enemy.isAlive()) {
-                clearInterval(gameInterval);
-                return;
-            }
-
-            const playerDamage = enemy.takeDamage(player.getCalculatedAttack());
-            const enemyDamage = player.takeDamage(enemy.getCalculatedAttack());
-
-            addMessage(`${player.name}は${playerDamage}のダメージを与えた。${enemy.name}は${enemyDamage}のダメージを与えた。`);
-
-            if (!enemy.isAlive()) {
-                player.gainExp(enemy.level * 10);
-                player.gainGold(enemy.level * 5);
-                const item = getRandomItem();
-                if (item) {
-                    player.addItem(item);
-                    addMessage(`${enemy.name}は死んだ！経験値とゴールドを獲得し、アイテム「${item.name}」を手に入れた。`);
-                } else {
-                    addMessage(`${enemy.name}は死んだ！経験値とゴールドを獲得した。`);
-                }
-                enemy = new Enemy(player.level);
-            } else if (!player.isAlive()) {
-                addMessage(`${player}は死んだ！`);
-            }
-
-            updateStats();
-        }
-
-        function useItem(index) {
-            player.useItem(index);
-            updateStats();
-        }
-
-        toggleButton.addEventListener("click", () => {
-            if (gameState === availableStates[statePlaying]) {
-                clearInterval(gameInterval);
-                gameState = availableStates[statePaused];
-                toggleButton.textContent = "探索";
-            } else if (gameState === availableStates[statePaused]) {
-                gameInterval = setInterval(battleTurn, 100);
-                gameState = availableStates[statePlaying];
-                toggleButton.textContent = "停止";
-            }
-        });
-
-        updateStats();
-    </script>
+    <script defer type="module" src="./app.mjs"></script>
 </body>
 </html>
