@@ -65,7 +65,6 @@ class Player extends Character {
     }
 
     addItem(item) {
-        console.log(this.inventory);
         this.inventory.add(item);
     }
 
