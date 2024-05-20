@@ -1,4 +1,7 @@
 import { enemies } from './enemies.mjs';
+import { combatItems as items, dropItems } from './items.mjs';
+import { Item } from './classes/Item.mjs';
+
 const statePlaying = 0;
 const statePaused = 1;
 const stateGameOver = 2;
@@ -87,17 +90,6 @@ class Enemy extends Character {
     }
 }
 
-class Item {
-    constructor(name, effect) {
-        this.name = name;
-        this.effect = effect;
-    }
-
-    use(player) {
-        this.effect(player);
-    }
-}
-
 class Inventory {
     constructor(inventoryItems) {
         this.inventoryItems = inventoryItems;
@@ -136,21 +128,9 @@ class InventoryItem {
     }
 }
 
-const items = [
-    new Item("包帯", player => { player.hp = Math.min(player.maxHp, player.hp + 30); }),
-    new Item("紫色の薬草", player => { player.hp = Math.min(player.maxHp, player.hp + 200); }),
-    new Item("覚醒作用と多幸感をもたらす異世界の粉末", player => { player.hp = player.maxHp; }),
-    new Item("ステロイド", player => { player.attack += 5; }),
-    new Item("皮下シリコン", player => { player.defense += 3; }),
-    new Item("火炎瓶", player => { if (enemy.isAlive()) { addMessage(`${player.name}は火炎瓶を投げた。`); enemy.takeDamage(20, true); } }),
-    new Item("手榴弾", player => { if (enemy.isAlive()) { enemy.takeDamage(100, true); } }),
-    new Item("RPG", player => { if (enemy.isAlive()) { enemy.takeDamage(200, true); } }),
-    new Item("波動砲", player => { if (enemy.isAlive()) { enemy.takeDamage(700, true); } }),
-];
-
 function getRandomItem() {
     if (Math.random() < 0.1) {
-        const item = items[Math.floor(Math.random() * items.length)];
+        const item = dropItems[Math.floor(Math.random() * items.length)];
         return new Item(item.name, item.effect);
     }
     return null;
@@ -180,6 +160,7 @@ function updateStats() {
         const itemLine = document.createElement("li");
         const itemName = document.createElement("button");
         itemName.textContent = item.item.name;
+        itemName.disabled = item.item.effect === undefined;
         itemName.onclick = () => player.useItem(index);
         const itemCount = document.createElement("span");
         itemCount.textContent = `${item.count}`;
